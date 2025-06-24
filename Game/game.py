@@ -153,15 +153,16 @@ class Spawner:
         self.group = group
         self.items = items
         self.next_spawn = 0
-        self.spawn_distance = 300
+        self.spawn_distance = 50
         self.side = 0
+        self.next_perimeter_spawn = 60
     
     def spawn(self):
         type = random.randint(1,5)
-        health = random.randint(1,2) + self.timer.time // 40
+        health = random.randint(1,2) + self.timer.time // 25
         damage = 1 + self.timer.time // 60
         speed = 0.75 + random.uniform(-0.25, 0.25)
-        exp = random.randint(1, 3) + self.timer.time // 20
+        exp = random.randint(1, 3) + self.timer.time // 30
 
         count = 1 + random.randint(0, int(self.timer.time // 25)%15)
 
@@ -169,16 +170,16 @@ class Spawner:
         cam_top = -self.camera.camera.y
         cam_right = cam_left + WIDTH
         cam_bottom = cam_top + HEIGHT
-        if self.side == 0:  # Верх
+        if self.side == 0:
             x = random.randint(cam_left, cam_right)
             y = cam_top - self.spawn_distance
-        elif self.side == 1:  # Право
+        elif self.side == 1:
             x = cam_right + self.spawn_distance
             y = random.randint(cam_top, cam_bottom)
-        elif self.side == 2:  # Низ
+        elif self.side == 2:
             x = random.randint(cam_left, cam_right)
             y = cam_bottom + self.spawn_distance
-        else:  # Лево
+        else:
             x = cam_left - self.spawn_distance
             y = random.randint(cam_top, cam_bottom)
 
@@ -191,6 +192,42 @@ class Spawner:
         if self.timer.time >= self.next_spawn:
             self.next_spawn = self.timer.time + random.randint(1, 1 + int(self.timer.time//60)%2)
             self.spawn()
+
+        if self.timer.time >= self.next_perimeter_spawn:
+            self.next_perimeter_spawn = self.timer.time + 60  # Следующий спавн через 60 секунд
+            self.spawn_perimeter()
+
+    def spawn_perimeter(self):
+        cam_left = -self.camera.camera.x
+        cam_top = -self.camera.camera.y
+        cam_right = cam_left + WIDTH
+        cam_bottom = cam_top + HEIGHT
+        
+        count = 50
+        
+        for i in range(count):
+            side = i % 4
+            
+            if side == 0:
+                x = random.randint(cam_left, cam_right)
+                y = cam_top - self.spawn_distance
+            elif side == 1:
+                x = cam_right + self.spawn_distance
+                y = random.randint(cam_top, cam_bottom)
+            elif side == 2:
+                x = random.randint(cam_left, cam_right)
+                y = cam_bottom + self.spawn_distance
+            else:
+                x = cam_left - self.spawn_distance
+                y = random.randint(cam_top, cam_bottom)
+            
+            type = random.randint(1,5)
+            health = random.randint(1,3) + self.timer.time // 25
+            damage = 1 + self.timer.time // 60
+            speed = 0.75 + random.uniform(-0.25, 0.25)
+            exp = random.randint(1, 3) + self.timer.time // 20
+            
+            Enemy(type, health, damage, speed, exp, self.player, x, y, self.group, self.items, self.timer)
 
 # ui
 def draw_ui(screen, timer, player):
@@ -420,8 +457,8 @@ class Enemy(pygame.sprite.Sprite):
             chance = random.random()
             if chance < 0.7:
                 Exp(self.exp, self.rect.centerx, self.rect.centery, self.player, self.items)
-            if chance > 0.97:
-                Heal(self.exp, self.rect.centerx, self.rect.centery, self.player, self.items)
+            if chance > 0.985:
+                Heal(random.randint(1,5), self.rect.centerx, self.rect.centery, self.player, self.items)
             self.kill()
         
         if self.normal_image and self.timer.time - self.last_hit_time > self.hit_cooldown:
@@ -970,7 +1007,7 @@ class Bite(Ability):
         self.damage = 2
         self.cooldown = 3
         self.last_shot_time = -self.cooldown
-        self.radius = 80
+        self.radius = 120
         self.rotation_speed = 3
         self.lifetime = 2
         self.max_projectiles = 3
@@ -1027,7 +1064,7 @@ class Crowbar(Ability):
 
     def level_up(self):
         super().level_up()
-        self.damage += 3
+        self.damage += 2
         if self.level % 3 == 0:
             self.projectiles += 1
     
@@ -1124,7 +1161,7 @@ class Phone(Ability):
             targets = random.sample(enemies_in_range, min(self.max_targets, len(enemies_in_range)))
             
             for target in targets:
-                target.take_damage(calculate_damage(self.damage, self.crit_chance, self.crit_multiplier))
+                target.take_damage(calculate_damage(self.damage, self.player.critical_chance, self.player.critical_multiplier))
                 
                 LightningEffect(target.rect.centerx, target.rect.centery, projectiles, self.player.timer)
             
@@ -1193,7 +1230,7 @@ class GoldenKnifeProjectile(Projectile):
 class GoldenKnife(Ability):
     def __init__(self, player):
         super().__init__(player, "Золотой нож", "Метает отскакивающий нож", ability_sprites[11])
-        self.damage = 4
+        self.damage = 3
         self.cooldown = 4
         self.last_use_time = -self.cooldown
         self.projectile_speed = 8
