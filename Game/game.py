@@ -1302,7 +1302,6 @@ class Beer(Ability):
         self.cooldown = 4
         self.last_use_time = -self.cooldown
         self.max_puddles = 3
-        self.level = 1
     
     def level_up(self):
         super().level_up()
