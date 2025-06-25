@@ -317,7 +317,7 @@ def draw_main_menu(screen):
     start_text = font.render("Нажмите ПРОБЕЛ чтобы начать", True, WHITE)
     screen.blit(start_text, (WIDTH // 2 - start_text.get_width() // 2, HEIGHT // 2))
     
-    controls_text = small_font.render("Управление: WASD - движение, 1-3 - выбор улучшений", True, WHITE)
+    controls_text = small_font.render("Управление: WASD - движение, 1-3 - выбор улучшений, пробел - пауза", True, WHITE)
     screen.blit(controls_text, (WIDTH // 2 - controls_text.get_width() // 2, HEIGHT // 2 + 50))
     
     if not hasattr(draw_main_menu, 'falling_sprites'):
